@@ -1,0 +1,135 @@
+---
+title: "Programming Assignment 3"
+format: gfm
+date: last-modified
+date-format: iso
+---
+
+# The script
+**Question 1. Examine the portion of the script you see below. In your own words what does this section do and why does it work? Demonstrate that you understand the code…**
+
+```{r}
+#| eval: false
+
+vonset = Get starting point: 2, 2
+voffset = Get end point: 2, 2
+durationV = voffset - vonset
+per20 = vonset + (durationV * 0.20)
+per35 = vonset + (durationV * 0.35)
+per50 = vonset + (durationV * 0.50)
+per65 = vonset + (durationV * 0.65)
+per80 = vonset + (durationV * 0.80)
+```
+
+I think that this portion of the script sets five different temporal points, that correspond to the 20-35-50-65-80%-points of the vowel and that will be used to extract F1 and F2 frequencies of the target vowels at these different time points. I am not completely sure what the first two lines of code mean, but they might be telling Praat to focus on tier 2 (vowel), as for both the vocal onset (vonset) and the vocal off set (voffset). 
+
+This procedure is similar to the one that we saw in Jacewicz et al. (2011)! 
+
+<br>
+
+
+**Question 2. In a few short sentences describe the general outline of the script, what the purpose is, and how it achieves this purpose?**
+
+By using this script our aim is to extract the F1 and F2 measurements of the target vowels at different temporal locations, as well as calculate spectral centroids and trajectory length, and save all these results to a csv file in order to do the analysis using R studio. The script achieves this purpose because the following elements are specified:
+
+  1. Create path and prepare the file to store the output (csv file with all the measurements, participant ID, etc.).
+  
+  2. Set the path to the .wav and .TextGrid files in order to tell Praat where to get the input from.
+  
+  3. Prepare and run the loop by setting up the defaults and adding the necessary instructions in order for Praat to automatically extract F1 and F2 measurements at different temporal points, and calculate the spectral centroids and trajectory length for each target vowel, in each language. In addition, add the instruction to print results and save them in a csv file, in the location that was specified in 1. 
+
+<br>
+
+**Question 3. In a few short sentences describe how the segmenting procedure you used this week differs from that used in pa_2. What are the advantages and disadvantages?**
+
+Both of the scripts used in pa_2 and pa_3 have the aim of extracting different vowel acoustic measurements. In pa_2, we used two different scripts: one to segment the .wav file and one to calculate and extract f0, duration, and intensity at midpoint. For pa_3, we are using only one script which extracts F1 and F2 measurements of the target vowels at different temporal locations, F1 and F2 spectral centroids, and vowel tragectory length. Thus, the main differences concern the type of data they produce: 
+
+  1. Whereas in pa_2 we calculated all the values at the midpoint of the vowel, in pa_3 we are calculating them at different locations within the target vowel. This 'new' approach is the same that Jacewicz et al. (2011) used in the paper that we read for March 25.
+  
+  2. In addition, in pa_2 we focused on f0, intensity and duration, but in pa_3 on different F1 and F2 measurements, spectral centroids (overall vowel position in the acoustic space), and trajectory length (a measure of formant movement that indicates the amount of formant change over the course of a vowel's production). 
+  
+The advantages of using the script for pa_3 is that we can do a more detailed analysis on the acoustic properties of the vowels, as it captures the dynamic nature of formant trajectories. As for disadvantages I am not sure, but I suppose that it is more complex to write (and easier to make a mistake) and perhaps it has a higher "computational cost".
+
+<br>
+
+# The data
+```{r}
+#| label: setup
+library("tidyverse")
+library("here")
+
+```
+
+
+```{r}
+#| label: explore data
+data <- read_csv(here("data", "vowel_data.csv"))
+
+summary(data)
+glimpse(data)
+
+```
+
+
+```{r}
+#| label: calculations
+data %>%
+  group_by(language, vowel) %>%
+  summarize(
+    f1_cent_mean = mean(f1_cent), 
+    f1_sd = sd(f1_cent),
+    f2_cent_mean = mean(f2_cent),
+    f2_sd = sd(f2_cent),
+    tl_mean = mean(tl),
+    tl_sd = sd(tl))
+```
+
+
+```{r}
+#| label: plots
+
+# trajectory length as a function of vowel and language
+data %>%
+  ggplot() +
+  aes(x = vowel, y = tl, color = vowel) +
+  facet_wrap(. ~ language, scales = "free_y") +
+  geom_boxplot(show.legend = F) +
+  labs(x = "Vowel", y = "Trajectory Length", title = "Trajectory length as a function of vowel and language")
+
+# f1 centroids as a function of vowel and language
+data %>%
+  ggplot() +
+  aes(x = vowel, y = f1_cent, color = vowel) +
+  facet_wrap(. ~ language, scales = "free_y") +
+  geom_boxplot(show.legend = F) +
+  scale_y_reverse() +
+  labs(x = "Vowel", y = "F1", title = "F1 as a function of vowel and language")
+
+# f2 centroids as a function of vowel and language
+data %>%
+  ggplot() +
+  aes(x = vowel, y = f2_cent, color = vowel) +
+  facet_wrap(. ~ language, scales = "free_y") +
+  geom_boxplot(show.legend = F) +
+  scale_y_reverse() +
+  labs(x = "Vowel", y = "F2", title = "F2 as a function of vowel and language")
+
+# Spectral centroids in F1/F2 vowel space
+data %>%
+  ggplot() +
+  aes(x = f2_cent, y = f1_cent, color = vowel) +
+  facet_grid(. ~ language) +
+  geom_point() +
+  stat_ellipse() +
+  scale_x_reverse() +
+  scale_y_reverse() +
+  labs(x = "F2", y = "F1", title = "Spectral centroids in F1/F2 vowel space by language")
+
+```
+
+
+
+
+
+
+
