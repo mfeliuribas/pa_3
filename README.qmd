@@ -55,6 +55,8 @@ The advantages of using the script for pa_3 is that we can do a more detailed an
 # The data
 ```{r}
 #| label: setup
+#| message: false
+#| warning: false
 library("tidyverse")
 library("here")
 
@@ -62,7 +64,7 @@ library("here")
 
 
 ```{r}
-#| label: explore data
+#| label: load-explore-data
 data <- read_csv(here("data", "vowel_data.csv"))
 
 summary(data)
@@ -70,9 +72,10 @@ glimpse(data)
 
 ```
 
+## Descriptive stats
 
 ```{r}
-#| label: calculations
+#| label: descriptives
 data %>%
   group_by(language, vowel) %>%
   summarize(
@@ -82,48 +85,79 @@ data %>%
     f2_sd = sd(f2_cent),
     tl_mean = mean(tl),
     tl_sd = sd(tl))
+
 ```
 
 
+## Plots
 ```{r}
 #| label: plots
 
 # trajectory length as a function of vowel and language
 data %>%
   ggplot() +
-  aes(x = vowel, y = tl, color = vowel) +
-  facet_wrap(. ~ language, scales = "free_y") +
+  aes(x = vowel, y = tl, fill = vowel) +
+  facet_wrap(. ~ language) +
   geom_boxplot(show.legend = F) +
+  scale_fill_viridis_d(name = NULL, end = 0.9) +
   labs(x = "Vowel", y = "Trajectory Length", title = "Trajectory length as a function of vowel and language")
 
 # f1 centroids as a function of vowel and language
 data %>%
   ggplot() +
-  aes(x = vowel, y = f1_cent, color = vowel) +
-  facet_wrap(. ~ language, scales = "free_y") +
+  aes(x = vowel, y = f1_cent, fill = vowel) +
+  facet_wrap(. ~ language) +
   geom_boxplot(show.legend = F) +
+  scale_fill_viridis_d(name = NULL, end = 0.9) +
   scale_y_reverse() +
   labs(x = "Vowel", y = "F1", title = "F1 as a function of vowel and language")
 
 # f2 centroids as a function of vowel and language
 data %>%
   ggplot() +
-  aes(x = vowel, y = f2_cent, color = vowel) +
-  facet_wrap(. ~ language, scales = "free_y") +
+  aes(x = vowel, y = f2_cent, fill = vowel) +
+  facet_wrap(. ~ language) +
   geom_boxplot(show.legend = F) +
+  scale_fill_viridis_d(name = NULL, end = 0.9) +
   scale_y_reverse() +
   labs(x = "Vowel", y = "F2", title = "F2 as a function of vowel and language")
 
-# Spectral centroids in F1/F2 vowel space
+```
+
+## Challenge
+```{r}
+# trajectory length in the F1/F2 vowel space
+
+# I really wanted to try to make this one, but I had to focus on my QP (or, if not, it will never get done). I will definitely try it when the course is over, if you don't show us how to do it :) 
+
+# spectral centroids in F1/F2 vowel space
+vowel_means <- data %>% 
+  group_by(vowel, language) %>% 
+  summarize(f1_cent = mean(f1_cent), f2_cent = mean(f2_cent)) %>% 
+  ungroup() %>% 
+  mutate(order = case_when(vowel == "i" ~ 1, vowel == "a" ~ 2, TRUE ~ 3), 
+         vowel = forcats::fct_reorder2(vowel, vowel, order)) %>% 
+  arrange(order)
+
 data %>%
+  mutate(vowel = forcats::fct_relevel(vowel, "u", "a", "i")) %>% 
   ggplot() +
-  aes(x = f2_cent, y = f1_cent, color = vowel) +
-  facet_grid(. ~ language) +
-  geom_point() +
-  stat_ellipse() +
-  scale_x_reverse() +
-  scale_y_reverse() +
-  labs(x = "F2", y = "F1", title = "Spectral centroids in F1/F2 vowel space by language")
+  aes(x = f2_cent, y = f1_cent, color = language, label = vowel) + 
+  geom_text(size = 3.5, alpha = 0.6, show.legend = F) + 
+  geom_path(
+    data = vowel_means, 
+    aes(group = language, lty = language), 
+    color = "grey") + 
+  geom_text(data = vowel_means, show.legend = F, size = 7) + 
+  scale_y_reverse() + 
+  scale_x_reverse() + 
+  scale_color_brewer(palette = "Set1") + 
+  labs(
+    title = "Vowel space comparison", 
+    subtitle = "Spectral centroids of English/Spanish cardinal vowels", 
+    y = "F1 (hz)", 
+    x = "F2 (hz)") + 
+  theme_minimal(base_size = 16)
 
 ```
 

@@ -1,5 +1,5 @@
 # Programming Assignment 3
-2024-03-29
+2024-04-01
 
 # The script
 
@@ -93,22 +93,8 @@ write (and easier to make a mistake) and perhaps it has a higher
 
 ``` r
 library("tidyverse")
-```
-
-    ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──
-    ✔ ggplot2 3.4.0     ✔ purrr   1.0.1
-    ✔ tibble  3.2.1     ✔ dplyr   1.1.0
-    ✔ tidyr   1.3.0     ✔ stringr 1.5.0
-    ✔ readr   2.1.3     ✔ forcats 1.0.0
-    ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-    ✖ dplyr::filter() masks stats::filter()
-    ✖ dplyr::lag()    masks stats::lag()
-
-``` r
 library("here")
 ```
-
-    here() starts at /Users/meritxellfeliuribas/Desktop/pa_3
 
 ``` r
 data <- read_csv(here("data", "vowel_data.csv"))
@@ -171,7 +157,7 @@ glimpse(data)
     Columns: 17
     $ id       <chr> "apv", "apv", "apv", "apv", "apv", "apv", "apv", "apv", "apv"…
     $ item     <chr> "meet", "beat", "feet", "seat", "heat", "fleet", "moss", "bot…
-    $ vowel    <chr> "i", "i", "i", "i", "i", "i", "o", "o", "o", "o", "o", "o", "…
+    $ vowel    <chr> "i", "i", "i", "i", "i", "i", "a", "a", "a", "a", "a", "a", "…
     $ language <chr> "en", "en", "en", "en", "en", "en", "en", "en", "en", "en", "…
     $ f1_cent  <dbl> 431.55, 304.89, 328.76, 341.11, 365.02, 395.27, 716.20, 744.2…
     $ f2_cent  <dbl> 1395.01, 1866.02, 2194.84, 2297.86, 2004.63, 2341.64, 1040.77…
@@ -186,6 +172,8 @@ glimpse(data)
     $ f2_50    <dbl> 2444.92, 2414.35, 2333.45, 2294.87, 1862.47, 2402.81, 1014.69…
     $ f2_65    <dbl> 674.56, 834.91, 2346.27, 2338.29, 2450.00, 2330.96, 1078.70, …
     $ f2_80    <dbl> 783.21, 2480.01, 2051.60, 2282.94, 2343.41, 2359.00, 1144.02,…
+
+## Descriptive stats
 
 ``` r
 data %>%
@@ -206,20 +194,23 @@ data %>%
     # Groups:   language [2]
       language vowel f1_cent_mean f1_sd f2_cent_mean f2_sd tl_mean  tl_sd
       <chr>    <chr>        <dbl> <dbl>        <dbl> <dbl>   <dbl>  <dbl>
-    1 en       i             361.  46.4        2017. 354.    2388. 2441. 
-    2 en       o             679.  40.8        1099.  51.0    339.   90.5
+    1 en       a             679.  40.8        1099.  51.0    339.   90.5
+    2 en       i             361.  46.4        2017. 354.    2388. 2441. 
     3 en       u             436.  29.1         989. 108.     245.  133. 
     4 sp       a             757.  19.9        1370.  32.7    188.   73.8
     5 sp       i             386.  34.4        1532. 217.    1047.  700. 
     6 sp       u             425.  13.9         900.  65.3    245.  110. 
 
+## Plots
+
 ``` r
 # trajectory length as a function of vowel and language
 data %>%
   ggplot() +
-  aes(x = vowel, y = tl, color = vowel) +
-  facet_wrap(. ~ language, scales = "free_y") +
+  aes(x = vowel, y = tl, fill = vowel) +
+  facet_wrap(. ~ language) +
   geom_boxplot(show.legend = F) +
+  scale_fill_viridis_d(name = NULL, end = 0.9) +
   labs(x = "Vowel", y = "Trajectory Length", title = "Trajectory length as a function of vowel and language")
 ```
 
@@ -229,9 +220,10 @@ data %>%
 # f1 centroids as a function of vowel and language
 data %>%
   ggplot() +
-  aes(x = vowel, y = f1_cent, color = vowel) +
-  facet_wrap(. ~ language, scales = "free_y") +
+  aes(x = vowel, y = f1_cent, fill = vowel) +
+  facet_wrap(. ~ language) +
   geom_boxplot(show.legend = F) +
+  scale_fill_viridis_d(name = NULL, end = 0.9) +
   scale_y_reverse() +
   labs(x = "Vowel", y = "F1", title = "F1 as a function of vowel and language")
 ```
@@ -242,26 +234,56 @@ data %>%
 # f2 centroids as a function of vowel and language
 data %>%
   ggplot() +
-  aes(x = vowel, y = f2_cent, color = vowel) +
-  facet_wrap(. ~ language, scales = "free_y") +
+  aes(x = vowel, y = f2_cent, fill = vowel) +
+  facet_wrap(. ~ language) +
   geom_boxplot(show.legend = F) +
+  scale_fill_viridis_d(name = NULL, end = 0.9) +
   scale_y_reverse() +
   labs(x = "Vowel", y = "F2", title = "F2 as a function of vowel and language")
 ```
 
 ![](README_files/figure-commonmark/plots-3.png)
 
+## Challenge
+
 ``` r
-# Spectral centroids in F1/F2 vowel space
-data %>%
-  ggplot() +
-  aes(x = f2_cent, y = f1_cent, color = vowel) +
-  facet_grid(. ~ language) +
-  geom_point() +
-  stat_ellipse() +
-  scale_x_reverse() +
-  scale_y_reverse() +
-  labs(x = "F2", y = "F1", title = "Spectral centroids in F1/F2 vowel space by language")
+# trajectory length in the F1/F2 vowel space
+
+# I really wanted to try to make this one, but I had to focus on my QP (or, if not, it will never get done). I will definitely try it when the course is over, if you don't show us how to do it :) 
+
+# spectral centroids in F1/F2 vowel space
+vowel_means <- data %>% 
+  group_by(vowel, language) %>% 
+  summarize(f1_cent = mean(f1_cent), f2_cent = mean(f2_cent)) %>% 
+  ungroup() %>% 
+  mutate(order = case_when(vowel == "i" ~ 1, vowel == "a" ~ 2, TRUE ~ 3), 
+         vowel = forcats::fct_reorder2(vowel, vowel, order)) %>% 
+  arrange(order)
 ```
 
-![](README_files/figure-commonmark/plots-4.png)
+    `summarise()` has grouped output by 'vowel'. You can override using the
+    `.groups` argument.
+
+``` r
+data %>%
+  mutate(vowel = forcats::fct_relevel(vowel, "u", "a", "i")) %>% 
+  ggplot() +
+  aes(x = f2_cent, y = f1_cent, color = language, label = vowel) + 
+  geom_text(size = 3.5, alpha = 0.6, show.legend = F) + 
+  geom_path(
+    data = vowel_means, 
+    aes(group = language, lty = language), 
+    color = "grey") + 
+  geom_text(data = vowel_means, show.legend = F, size = 7) + 
+  scale_y_reverse() + 
+  scale_x_reverse() + 
+  scale_color_brewer(palette = "Set1") + 
+  labs(
+    title = "Vowel space comparison", 
+    subtitle = "Spectral centroids of English/Spanish cardinal vowels", 
+    y = "F1 (hz)", 
+    x = "F2 (hz)") + 
+  theme_minimal(base_size = 16)
+```
+
+![](README_files/figure-commonmark/unnamed-chunk-6-1.png)
